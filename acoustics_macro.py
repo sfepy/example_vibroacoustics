@@ -119,7 +119,7 @@ def param_w(pb):
 
         yield None
 
-    savemat(op.join(wdir, 'results_tloss.mat'), {'k': conf.wave_nums, 'tl': tl_out})
+    savemat(op.join(wdir, 'results', 'tloss.mat'), {'k': conf.wave_nums, 'tl': tl_out})
 
 
 ############################################################
