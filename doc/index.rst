@@ -57,7 +57,7 @@ The homogenization engine of SfePy, see [CimrmanLukesRohan2019]_, is employed
 for their effective calculation.
 
 At the macroscopic level, we consider the waveguide which domain is divided by
-the perforated plate into two part of the same shape and size, see
+the perforated plate into two parts of the same shape and size, see
 :numref:`fig_macro`. The waveguide input is labelled by :math:`\Gamma_{in}` and the
 incident wave is imposed on this boundary. The anechoic boundary condition is
 considered at the waveguide output which is labelled by :math:`\Gamma_{out}`.
@@ -79,8 +79,7 @@ homogenized interface :math:`\Gamma_0`.
    (macroscopic) level.
 
 The whole two-scale analysis is govern by the :code:`acoustics.py` script which
-invokes the homogenization procedures and runs the simulation at the global
-(macroscopic) level.
+invokes the homogenization procedures and runs the simulation at the macroscopic level.
 
 
 Running simulation
@@ -95,7 +94,7 @@ unpack it in the main SfePy directory and type:
    python example_vibroacoustics-1/acoustics.py
 
    
-Running the :code:`resview.py` script, we can visualize the distrubution of the global pressure field:
+By running the :code:`resview.py` script, you can visualize the distrubution of the global pressure field:
 
 .. code::
    
@@ -108,7 +107,7 @@ Running the :code:`resview.py` script, we can visualize the distrubution of the 
 
    Distribution of the macroscopic pressure in the macroscopic domain :math:`\Omega^+ \cup \Omega^-`.
 
-and e.g. deflection field calculated at the interface :math:`\Gamma_0`:
+and e.g. the deflection field calculated at the interface :math:`\Gamma_0`:
 
 .. code::
    
