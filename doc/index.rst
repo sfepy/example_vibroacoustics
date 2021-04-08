@@ -48,7 +48,7 @@ coupled with the global acoustic field defined in :math:`\Omega^+ \cup \Omega^-`
 Numerical implementation
 ------------------------
 
-The homogenized coefficients and the global macroscopic equations are
+The problem of homogenized coefficients and the global macroscopic equations are
 discretized and solved by means of the finite element method. The frequency
 dependent coefficients are defined in :code:`acoustics_micro.py` and the
 frequency independent coefficients calculated within the 2D plate
@@ -94,7 +94,8 @@ unpack it in the main SfePy directory and type:
    python example_vibroacoustics-1/acoustics.py
 
    
-By running the :code:`resview.py` script, you can visualize the distrubution of the global pressure field:
+By running the :code:`resview.py` script, you can visualize the distrubution of the global pressure field
+calculated for frequency :math:`\omega = 33000` Hz:
 
 .. code::
    
