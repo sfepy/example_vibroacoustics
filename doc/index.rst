@@ -10,9 +10,10 @@ Mathematical model
 ------------------
 
 This example presents the implementation of the homogenized model of the
-acoustic transmission on perforated plates described in [RohanLukes2021]_. The elastic plate
-interacting with an inviscid fluid is replaced by an interface on which the
-homogenized transmission conditions are applied, see :numref:`fig_homog`. 
+acoustic transmission on perforated plates described in [RohanLukes2021]_. The
+elastic plate interacting with an inviscid fluid is replaced by an interface on
+which the homogenized transmission conditions are applied, see
+:numref:`fig_homog`.
 
 .. _fig_homog:
 
@@ -28,8 +29,9 @@ homogenized transmission conditions are applied, see :numref:`fig_homog`.
 
 The frequency dependent homogenized coefficients are computed using
 characteristic responses of the representative cell which consists of the fluid
-part :math:`Y^\ast` and the solid plate :math:`S_m, \Xi_m` embedding the elastic inclusion
-:math:`S_c, \Xi_c` and the resonator :math:`S_r, \Xi_r` as illustrated in :numref:`fig_micro`.
+part :math:`Y^\ast` and the solid plate :math:`S_m, \Xi_m` embedding the
+elastic inclusion :math:`S_c, \Xi_c` and the resonator :math:`S_r, \Xi_r` as
+illustrated in :numref:`fig_micro`.
 
 .. _fig_micro:
 
@@ -43,13 +45,14 @@ part :math:`Y^\ast` and the solid plate :math:`S_m, \Xi_m` embedding the elastic
 
 Equations describing the homogenized transmission layer involve the homogenized
 coefficients and are solved in the macroscopic domain :math:`\Gamma_0` and are
-coupled with the global acoustic field defined in :math:`\Omega^+ \cup \Omega^-`.
+coupled with the global acoustic field defined in :math:`\Omega^+ \cup
+\Omega^-`.
 
 Numerical implementation
 ------------------------
 
-The problem of homogenized coefficients and the global macroscopic equations are
-discretized and solved by means of the finite element method. The frequency
+The problem of homogenized coefficients and the global macroscopic equations
+are discretized and solved by means of the finite element method. The frequency
 dependent coefficients are defined in :code:`acoustics_micro.py` and the
 frequency independent coefficients calculated within the 2D plate
 representation :math:`\Xi` are specified in :code:`acoustics_micro_plate.py`.
@@ -74,12 +77,13 @@ homogenized interface :math:`\Gamma_0`.
    :align: center
    :figclass: align-center
 
-   The computational domains :math:`\Omega^+`, :math:`\Omega^-`, :math:`\Gamma_0`
-   employed in the numerical simulations of the acoustic transmission at the global
-   (macroscopic) level.
+   The computational domains :math:`\Omega^+`, :math:`\Omega^-`,
+   :math:`\Gamma_0` employed in the numerical simulations of the acoustic
+   transmission at the global (macroscopic) level.
 
 The whole two-scale analysis is govern by the :code:`acoustics.py` script which
-invokes the homogenization procedures and runs the simulation at the macroscopic level.
+invokes the homogenization procedures and runs the simulation at the
+macroscopic level.
 
 
 Running simulation
@@ -94,8 +98,8 @@ unpack it in the main SfePy directory and type:
    python example_vibroacoustics-1/acoustics.py
 
    
-By running the :code:`resview.py` script, you can visualize the distrubution of the global pressure field
-calculated for frequency :math:`\omega = 33000` Hz:
+By running the :code:`resview.py` script, you can visualize the distribution of
+the global pressure field calculated for frequency :math:`\omega = 33000` Hz:
 
 .. code::
    
@@ -106,7 +110,8 @@ calculated for frequency :math:`\omega = 33000` Hz:
    :align: center
    :figclass: align-center
 
-   Distribution of the macroscopic pressure in the macroscopic domain :math:`\Omega^+ \cup \Omega^-`.
+   Distribution of the macroscopic pressure in the macroscopic domain
+   :math:`\Omega^+ \cup \Omega^-`.
 
 and e.g. the deflection field calculated at the interface :math:`\Gamma_0`:
 
