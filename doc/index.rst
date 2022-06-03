@@ -133,7 +133,8 @@ References
 .. [RohanLukes2021] Rohan E., Lukeš V.
    Homogenization of the vibro-acoustic transmission on periodically perforated
    elastic plates with arrays of resonators.
-   `arXiv:2104.01367 <https://arxiv.org/abs/2104.01367>`_
+   Applied Mathematical Modelling, 2022,
+   `DOI:10.1016/j.apm.2022.05.040 <https://doi.org/10.1016/j.apm.2022.05.040>`_
 .. [CimrmanLukesRohan2019] Cimrman R., Lukeš V., Rohan E.
    Multiscale finite element calculations in Python using SfePy.
    Advances in Computational Mathematics, 45(4):1897-1921, 2019,
