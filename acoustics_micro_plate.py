@@ -4,6 +4,9 @@
 # Homogenization of the vibro–acoustic transmission on periodically
 # perforated elastic plates with arrays of resonators.
 # https://arxiv.org/abs/2104.01367 (arXiv:2104.01367v1)
+# https://doi.org/10.1016/j.apm.2022.05.040 (Applied Mathematical Modelling, 2022)
+#
+# compatible with SfePy 2022.1
 
 import os
 import glob
@@ -23,6 +26,7 @@ def get_inside_node(mesh):
     inside = domain.create_region('Inside', 'r.Z -v r.S', 'vertex')
 
     return inside.entities[0][0]
+
 
 ###################################################################
 def define(filename_mesh=None, coefs_filename=None, mat_prop=None):
@@ -58,7 +62,8 @@ def define(filename_mesh=None, coefs_filename=None, mat_prop=None):
     if isinstance(mat_prop, dict):
         mat_C, mat_G, mat_rho = {}, {}, {}
         for k, v in mat_prop.items():
-            if k == 'a' or k == 'c' or k == 'r': continue
+            if k == 'a' or k == 'c' or k == 'r':
+                continue
             rname = 'Y' + k
             regions[rname] = 'cells of group %d' % v[0]
             E, nu, rho = v[1:]
@@ -137,7 +142,7 @@ def define(filename_mesh=None, coefs_filename=None, mat_prop=None):
     coefs = {
         'Vol_Y': {
             'regions': ['Ymid'] + regs,
-            'expression': 'd_volume.i.%s(p)',
+            'expression': 'ev_volume.i.%s(p)',
             'class': cb.VolumeFractions,
         },
         'Cm': {
@@ -170,7 +175,7 @@ def define(filename_mesh=None, coefs_filename=None, mat_prop=None):
         },
         'rhos': {
             'requires': [],
-            'expression': 'ev_volume_integrate_mat.i.Ymid(mat_CG.rho, Pi1p)',
+            'expression': 'ev_integrate_mat.i.Ymid(mat_CG.rho, Pi1p)',
             'set_variables': [],
             'class': cb.CoefOne,
         },

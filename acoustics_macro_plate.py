@@ -4,6 +4,9 @@
 # Homogenization of the vibro–acoustic transmission on periodically
 # perforated elastic plates with arrays of resonators.
 # https://arxiv.org/abs/2104.01367 (arXiv:2104.01367v1)
+# https://doi.org/10.1016/j.apm.2022.05.040 (Applied Mathematical Modelling, 2022)
+#
+# compatible with SfePy 2022.1
 
 import os.path as op
 import numpy as nm
@@ -143,11 +146,11 @@ def define(**kwargs):
         # 'per_sp0': (['Bottom', 'Top'], {'sp0.0': 'sp0.0'},
         #             'match_y_plane'),
         'per_w': (['Bottom', 'Top'], {'w.0': 'w.0'},
-                'match_y_plane'),
+                  'match_y_plane'),
         'per_u': (['Bottom', 'Top'], {'u.all': 'u.all'},
-                'match_y_plane'),
+                  'match_y_plane'),
         'per_theta': (['Bottom', 'Top'], {'theta.all': 'theta.all'},
-                    'match_y_plane'),
+                      'match_y_plane'),
     }
 
     equations = {
@@ -155,18 +158,18 @@ def define(**kwargs):
         # eq. (79)_1
         'eq_g01': """
                 0.5 * dw_diffusion.i.Gamma0_1(ac.A, f01, sp0)
-            - 0.5 * dw_volume_dot.i.Gamma0_1(ac.w2K, f01, sp0)
+            - 0.5 * dw_dot.i.Gamma0_1(ac.w2K, f01, sp0)
             + %s * dw_v_dot_grad_s.i.Gamma0_1(ac.wD, u, f01)
             + %s * dw_biot.i.Gamma0_1(ac.wH, u, f01)
-            + %s * dw_volume_dot.i.Gamma0_1(ac.w, f01, g01)
-            - %s * dw_volume_dot.i.Gamma0_1(ac.w, f01, g02)
+            + %s * dw_dot.i.Gamma0_1(ac.w, f01, g01)
+            - %s * dw_dot.i.Gamma0_1(ac.w, f01, g02)
                     = 0""" % (1j, 1j, 1j / mconf.eps0, 1j / mconf.eps0),
         # eq. (80)_1
         'eq_g02': """
-            + 0.5 * dw_volume_dot.i.Gamma0_1(ac.w2F, f02, g01)
-            + 0.5 * dw_volume_dot.i.Gamma0_1(ac.w2F, f02, g02)
-                    - dw_volume_dot.i.Gamma0_1(ac.w2C3, f02, w)
-            - %s * dw_volume_dot.i.Gamma0_1(ac.w, f02, dp0)
+            + 0.5 * dw_dot.i.Gamma0_1(ac.w2F, f02, g01)
+            + 0.5 * dw_dot.i.Gamma0_1(ac.w2F, f02, g02)
+                    - dw_dot.i.Gamma0_1(ac.w2C3, f02, w)
+            - %s * dw_dot.i.Gamma0_1(ac.w, f02, dp0)
                     = 0""" % (1j / mconf.eps0,),
         # p^0 = 0.5 * (P^+ + P^-)
         # eq. (79)_2
@@ -174,28 +177,27 @@ def define(**kwargs):
             - %s * dw_v_dot_grad_s.i.Gamma0_1(ac.wD, v, sp0)
             - %s * dw_biot.i.Gamma0_1(ac.wH, v, sp0)
                     + dw_lin_elastic.i.Gamma0_1(ac.E, v, u)
-                    - dw_volume_dot.i.Gamma0_1(ac.w2M, v, u)
+                    - dw_dot.i.Gamma0_1(ac.w2M, v, u)
                     = 0""" % (1j * 0.5, 1j * 0.5),
         # eq. (80)_2
         'eq_z': """
-                    - dw_volume_dot.i.Gamma0_1(ac.w2N, z, w)
+                    - dw_dot.i.Gamma0_1(ac.w2N, z, w)
                     + dw_diffusion.i.Gamma0_1(ac.S, z, w)
                     - dw_v_dot_grad_s.i.Gamma0_1(ac.S, theta, z)
-            + 0.5 * dw_volume_dot.i.Gamma0_1(ac.w2C3, z, g01)
-            + 0.5 * dw_volume_dot.i.Gamma0_1(ac.w2C3, z, g02)
+            + 0.5 * dw_dot.i.Gamma0_1(ac.w2C3, z, g01)
+            + 0.5 * dw_dot.i.Gamma0_1(ac.w2C3, z, g02)
                     = 0""",
         # eq. (80)_2
         'eq_nu': """
-                    - dw_volume_dot.i.Gamma0_1(ac.w2h2L, nu, theta)
+                    - dw_dot.i.Gamma0_1(ac.w2h2L, nu, theta)
                     + dw_lin_elastic.i.Gamma0_1(ac.h2E, nu, theta)
-                    + dw_volume_dot.i.Gamma0_1(ac.S, nu, theta)
+                    + dw_dot.i.Gamma0_1(ac.S, nu, theta)
                     - dw_v_dot_grad_s.i.Gamma0_1(ac.S, nu, w)
                     = 0""",
     }
 
     options = {
-        'output_dir': op.join(wdir, 'results'),
-        'output_format': 'h5',
+        'output_dir': mconf.options['output_dir'],
     }
 
     solvers = {

@@ -4,6 +4,9 @@
 # Homogenization of the vibro–acoustic transmission on periodically
 # perforated elastic plates with arrays of resonators.
 # https://arxiv.org/abs/2104.01367 (arXiv:2104.01367v1)
+# https://doi.org/10.1016/j.apm.2022.05.040 (Applied Mathematical Modelling, 2022)
+#
+# compatible with SfePy 2022.1
 
 import os.path as op
 import numpy as nm
@@ -55,7 +58,6 @@ def post_process_macro(out, pb, state, extend=False):
         k2 = k1.replace('01', '02')
         out[k0] = Struct(name=o.name,
                          mode=o.mode,
-                         dofs=o.dofs,
                          var_name=o.var_name,
                          data=(out[k1].data - out[k2].data) / pb.conf.eps0)
 
@@ -64,7 +66,6 @@ def post_process_macro(out, pb, state, extend=False):
         k0 = k + 'jP1'
         out[k0] = Struct(name=o.name,
                          mode=o.mode,
-                         dofs=o.dofs,
                          var_name=o.var_name,
                          data=o.data / pb.conf.eps0)
 
@@ -72,7 +73,6 @@ def post_process_macro(out, pb, state, extend=False):
         o2 = out[k + 'g02']
         out[k + 'G1'] = Struct(name=o.name,
                                mode=o.mode,
-                               dofs=o.dofs,
                                var_name=o.var_name,
                                data=(o.data - o2.data) / pb.conf.eps0)
 
@@ -113,13 +113,14 @@ def param_w(pb):
         pb.conf.ofn_trunk = pb.ofn_trunk
         yield pb, out
 
-        state = out[-1][1].get_parts()
+        state = out[-1][1].get_state_parts()
         tl_out.append(eval_phi(pb, state['p1'], state['p2'], conf.p_inc))
         print('>>> TL: ', tl_out[-1])
 
         yield None
 
-    savemat(op.join(wdir, 'results', 'tloss.mat'), {'k': conf.wave_nums, 'tl': tl_out})
+    savemat(op.join(wdir, 'results', 'tloss.mat'),
+            {'k': conf.wave_nums, 'tl': tl_out})
 
 
 ############################################################
@@ -129,6 +130,7 @@ def define(filename_mesh=None, sound_speed=None, rho0=None,
 
     # generate mid mesh
     filename_mesh_plate = generate_plate_mesh(op.join(wdir, filename_mesh))
+
     wave_num = nm.array(freqs) / sound_speed
     wave_nums, wave_num = wave_num, wave_num[0]
 
@@ -209,26 +211,25 @@ def define(filename_mesh=None, sound_speed=None, rho0=None,
     equations = {
         'eq_p1': """
               dw_laplace.i.Omega1(ac.c2, q1, p1)
-            - dw_volume_dot.i.Omega1(ac.w2, q1, p1)
-       + %s * dw_surface_dot.i.GammaOut(ac.wc, q1, p1)
-       - %s * dw_surface_dot.i.Gamma0_1(ac.wc2, q1, g01)
-       = 0""" % (1j, 1j),
+            - dw_dot.i.Omega1(ac.w2, q1, p1)
+       + %s * dw_dot.i.GammaOut(ac.wc, q1, p1)
+       - %s * dw_dot.i.Gamma0_1(ac.wc2, q1, g01)
+            = 0""" % (1j, 1j),
         'eq_p2': """
               dw_laplace.i.Omega2(ac.c2, q2, p2)
-            - dw_volume_dot.i.Omega2(ac.w2, q2, p2)
-       + %s * dw_surface_dot.i.GammaIn(ac.wc, q2, p2)
-       + %s * dw_surface_dot.i.Gamma0_2(ac.wc2, q2, tr(g02))
-       = %s * dw_surface_integrate.i.GammaIn(ac.wc, q2)"""
-            % (1j, 1j, 2j * p_inc),
+            - dw_dot.i.Omega2(ac.w2, q2, p2)
+       + %s * dw_dot.i.GammaIn(ac.wc, q2, p2)
+       + %s * dw_dot.i.Gamma0_2(ac.wc2, q2, tr(g02))
+       = %s * dw_integrate.i.GammaIn(ac.wc, q2)""" % (1j, 1j, 2j * p_inc),
         'eq_dp': """
-              dw_surface_dot.i.Gamma0_1(dq0, p1)
-            - dw_surface_dot.i.Gamma0_1(dq0, tr(p2))
-            - dw_surface_dot.i.Gamma0_1(dq0, dp0)
+              dw_dot.i.Gamma0_1(dq0, p1)
+            - dw_dot.i.Gamma0_1(dq0, tr(p2))
+            - dw_dot.i.Gamma0_1(dq0, dp0)
             = 0""",
         'eq_sp': """
-              dw_surface_dot.i.Gamma0_1(sq0, p1)
-            + dw_surface_dot.i.Gamma0_1(sq0, tr(p2))
-            - dw_surface_dot.i.Gamma0_1(sq0, sp0)
+              dw_dot.i.Gamma0_1(sq0, p1)
+            + dw_dot.i.Gamma0_1(sq0, tr(p2))
+            - dw_dot.i.Gamma0_1(sq0, sp0)
             = 0""",
     }
 

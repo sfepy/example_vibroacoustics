@@ -4,6 +4,9 @@
 # Homogenization of the vibro–acoustic transmission on periodically
 # perforated elastic plates with arrays of resonators.
 # https://arxiv.org/abs/2104.01367 (arXiv:2104.01367v1)
+# https://doi.org/10.1016/j.apm.2022.05.040 (Applied Mathematical Modelling, 2022)
+#
+# compatible with SfePy 2022.1
 
 import numpy as nm
 import os
@@ -25,12 +28,12 @@ kr = 5  # resontator: density and elasticity multiplicator
 
 sound_speed = 343.0
 
-mat_prop = { # region: (cell_group, E, nu, rho)
+mat_prop = {  # region: (cell_group, E, nu, rho)
     'a': (1, 1.55),  # rho0, Air
     'm': (2, 70e9, 0.34, 2700),  # Aluminium
     'c': (3, 0.1e9 / eps0**2, 0.48, 1200),  # Rubber
     'r': (4, 0.1e9 / eps0**2 * kr, 0.48, 1200 * kr),  # Rubber (rescaled)
-} # engineeringtoolbox.com
+}  # engineeringtoolbox.com
 
 freqs = nm.linspace(*freqs_) if isinstance(freqs_, tuple) else freqs_
 print('>>> frequencies: %f - %f (%d)' % (freqs[0], freqs[-1], len(freqs)))
@@ -72,10 +75,10 @@ define_args = {
 }
 
 options = Struct(conf=None, app_options=None,
-                output_filename_trunk=None, save_ebc=None,
-                save_ebc_nodes=None, save_regions=False,
-                save_regions_as_groups=False,
-                save_field_meshes=False, solve_not=False)
+                 output_filename_trunk=None, save_ebc=None,
+                 save_ebc_nodes=None, save_regions=False,
+                 save_regions_as_groups=False,
+                 save_field_meshes=False, solve_not=False)
 
 required, other = get_standard_keywords()
 

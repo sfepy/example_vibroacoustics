@@ -4,6 +4,10 @@
 # Homogenization of the vibro–acoustic transmission on periodically
 # perforated elastic plates with arrays of resonators.
 # https://arxiv.org/abs/2104.01367 (arXiv:2104.01367v1)
+# https://doi.org/10.1016/j.apm.2022.05.040 (Applied Mathematical Modelling, 2022)
+#
+# compatible with SfePy 2022.1
+
 
 from sfepy.homogenization.utils import define_box_regions
 import sfepy.discrete.fem.periodic as per
@@ -91,12 +95,11 @@ def _get_problem2d(mesh3d, h, mat_prop, cell_size, mode):
                                 Equation, Equations, Problem)
     from sfepy.base.conf import ProblemConf
 
-
     regs = {'Y' + k: 'cells of group %d' % v[0] for k, v in mat_prop.items()}
     mesh2d = generate_mesh2d(mesh3d, h, regs, cell_size)
-    
+
     regs = {'S' + k: 'cells of group %d' % v[0] for k, v in mat_prop.items()
-        if not(k == 'a')}
+            if not(k == 'a')}
     domain2d = FEDomain('domain', mesh2d)
     regions = {k: domain2d.create_region(k, v) for k, v in regs.items()}
     if 'r' in mat_prop:
@@ -125,9 +128,9 @@ def _get_problem2d(mesh3d, h, mat_prop, cell_size, mode):
         mat_vals.update({'Shrho0' + k: mat_S, 'rho' + k: mat_rho, 'D' + k: mat_D})
 
     m = Material('m', **mat_vals)
-        
+
     conf = ProblemConf({
-        'integrals': {'i': 2,},
+        'integrals': {'i': 2},
         'materials': {'m': (mat_vals,)},
     })
 
@@ -144,20 +147,21 @@ def _get_problem2d(mesh3d, h, mat_prop, cell_size, mode):
     u = FieldVariable('u', 'unknown', field)
     v = FieldVariable('v', 'test', field, primary_var_name='u')
     terms = [Term.new(term % k, integral, regions['S' + k], m=m, v=v, u=u)
-        for k in ['c', 'r'] if k in mat_prop]
+             for k in ['c', 'r'] if k in mat_prop]
 
     ts = terms[0] + terms[1] if len(terms) == 2 else terms[0]
     eq1 = Equation(ename, ts)
 
     terms = [Term.new('dw_volume_dot(m.rho%s, v, u)' % k, integral,
-        regions['S' + k], m=m, v=v, u=u) for k in ['c', 'r'] if k in mat_prop]
+             regions['S' + k], m=m, v=v, u=u)
+             for k in ['c', 'r'] if k in mat_prop]
 
     ts = terms[0] + terms[1] if len(terms) == 2 else terms[0]
-    eq2 = Equation('Volume_dot', ts)   
+    eq2 = Equation('Volume_dot', ts)
 
     pb = Problem('aux_2D_%s' % mode, equations=Equations([eq1, eq2]))
 
-    fixed = EssentialBC('Fixed', Gamma, {'u.all' : 0.0})
+    fixed = EssentialBC('Fixed', Gamma, {'u.all': 0.0})
     pb.time_update(ebcs=Conditions([fixed]))
     pb.update_materials()
 
@@ -216,12 +220,12 @@ class MySimpleEVP(cp.SimpleEVP):
         volume = self.get_volume()
 
         mtx_A = eq1.evaluate(mode='weak', dw_mode='matrix',
-                             asm_obj=problem.mtx_a) /volume
+                             asm_obj=problem.mtx_a) / volume
         mtx_M = mtx_A.copy()
         mtx_M.data[:] = 0.0
         mtx_M = eq2.evaluate(mode='weak', dw_mode='matrix',
                              asm_obj=mtx_M) / volume
- 
+
         evp_cache['mtxs']['A_' + self.flag] = mtx_A
         evp_cache['mtxs']['M_' + self.flag] = mtx_M
 
@@ -289,7 +293,8 @@ class MySimpleEVP_II(cp.SimpleEVP):
     def prepare_matrices(self, problem):
         import scipy.sparse.linalg as scsla
         equations = problem.equations
-        mtx = equations.eval_tangent_matrices(None, problem.mtx_a,
+        state = problem.create_state()
+        mtx = equations.eval_tangent_matrices(state(), problem.mtx_a,
                                               by_blocks=True)
 
         volume = self.get_volume()
@@ -302,7 +307,7 @@ class MySimpleEVP_II(cp.SimpleEVP):
         E = nm.diag(evp1.eigs)
 
         self.cache.update({'solve_C': solve, 'mtx_R': R})
-        
+
         evp_cache['mtxs']['B'] = mtx['B'] / volume
         evp_cache['mtxs']['C'] = mtx['C'] / volume
         evp_cache['mtxs']['gamma'] = self.gamma
@@ -318,7 +323,7 @@ class MySimpleEVP_II(cp.SimpleEVP):
         wn = nm.sqrt(nm.diag(nm.dot(nm.dot(mtx_s_phi.T, E), mtx_s_phi)))
         w = mtx_s_phi.copy()
         for ii, v in enumerate(wn):
-            w[:, ii] /= v      
+            w[:, ii] /= v
         return w, w
 
     def save(self, eigs, mtx_phi, problem):
@@ -345,9 +350,10 @@ class MySimpleEVP_II_rhs_3(cb.CorrMiniApp):
 
         evp_cache['ebcs' + self.flag] = problem.ebcs
         evp_cache['epbcs' + self.flag] = problem.epbcs
-        out = problem.equations.eval_residuals(None, by_blocks=True)
+        state = problem.create_state()
+        out = problem.equations.eval_residuals(state(), by_blocks=True)
         volume = self.get_volume()
-    
+
         vec_r = out['vec_r'] / volume if 'vec_r' in out else None
         vec_b = out['vec_b'] / volume if 'vec_b' in out else None
         Cib = evp2.solve_C(vec_b)
@@ -376,7 +382,7 @@ class MySimpleEVP_II_rhs_a(MySimpleEVP_II_rhs_3):
 
         vec_r, vec_b = [], []
         volume = self.get_volume()
-        
+
         for ir in range(2):
             if hasattr(self, 'eq_pars'):
                 eqs = {k: v % self.eq_pars[ir] for k, v in self.equations.items()}
@@ -396,9 +402,10 @@ class MySimpleEVP_II_rhs_a(MySimpleEVP_II_rhs_3):
                 for (var, req, comp) in self.set_variables:
                     variables[var].set_data(data[req].states[ir][comp])
 
-            out = problem.equations.eval_residuals(None, by_blocks=True)
+            state = problem.create_state()
+            out = problem.equations.eval_residuals(state(), by_blocks=True)
 
-            vec_ri, vec_bi = None, None 
+            vec_ri, vec_bi = None, None
             if 'vec_r' in out:
                 vec_ri = out['vec_r'] / volume
                 vec_r.append(vec_ri)
@@ -492,7 +499,7 @@ class PhonoTensor(cb.MiniAppBase):
     def __call__(self, volume=None, problem=None, data=None):
         C1 = data[self.requires[0]]
         C2 = data[self.requires[1]]
-        
+
         n_freq, _, nc = C1.shape
         if len(self.requires) >= 3:
             C3 = data[self.requires[2]]
@@ -508,6 +515,7 @@ class PhonoTensor(cb.MiniAppBase):
             out[:, 2:3, 2:3] = C3
 
         return out
+
 
 ##################################################################
 def define(filename_mesh=None, coefs_filename=None, mat_prop=None,
@@ -589,7 +597,7 @@ def define(filename_mesh=None, coefs_filename=None, mat_prop=None,
         epbcs.update({
             'per_p_' + d: (['Ya_' + p1, 'Ya_' + p2], {'p.0': 'p.0'},
                            'match_%s_plane' % d),
-        }) 
+        })
 
     all_periodic_p = ['per_p_%s' % ii for ii in ['x', 'y']]
 
@@ -613,14 +621,14 @@ def define(filename_mesh=None, coefs_filename=None, mat_prop=None,
 
     gamma = h / rho0
 
-    exp_eigenmomenta = ' + '.join(['ev_volume_integrate.i.S%s(m.rho%s, u)' % (k, k)
-        for k in ['c', 'r'] if k in mat_prop])
+    exp_eigenmomenta = ' + '.join(['ev_integrate.i.S%s(m.rho%s, u)' % (k, k)
+                                   for k in ['c', 'r'] if k in mat_prop])
 
     dv_regs_to_mat = {'S%s1' % k: ('reg_%s' % k, 'rho')
-        for k in ['m', 'c', 'r'] if k in mat_prop}
+                      for k in ['m', 'c', 'r'] if k in mat_prop}
 
     vols = ['Y', 'Ys', 'Yi'] + ['Y' + k for k in mat_prop.keys()]
-    surfs =  ['Si1', 'Ss1', 'Ip'] + ['S%s1' % k for k in mat_prop.keys()]
+    surfs = ['Si1', 'Ss1', 'Ip'] + ['S%s1' % k for k in mat_prop.keys()]
 
     evp_solver = {
         'eigensolver': 'eig.sgscipy',
@@ -629,17 +637,17 @@ def define(filename_mesh=None, coefs_filename=None, mat_prop=None,
     coefs = {
         'volumes': {
             'regions': vols,
-            'expression': 'd_volume.5.%s(V)',
+            'expression': 'ev_volume.5.%s(V)',
             'class': cb.VolumeFractions,
         },
         'surfaces': {
             'regions': surfs,
-            'expression': 'd_surface.5.%s(V)',
+            'expression': 'ev_volume.5.%s(V)',
             'class': cb.VolumeFractions,
         },
         'Vol_Imp': {
             'regions': ['Im', 'Ip'],
-            'expression': 'd_surface.5.%s(V)',
+            'expression': 'ev_volume.5.%s(V)',
             'class': cb.VolumeFractions,
         },
         'h': {
@@ -775,12 +783,12 @@ def define(filename_mesh=None, coefs_filename=None, mat_prop=None,
     }
 
     eq_evp = {
-        'M,v,w': 'dw_surface_dot.i.Si1(reg.rho, v, w)',
+        'M,v,w': 'dw_dot.i.Si1(reg.rho, v, w)',
         'C,q,p': 'dw_laplace.i.Ya(q, p)',
-        'BT,v,p': """dw_surface_dot.i.Si1(v, p) 
-                   - dw_surface_dot.i.Si1(v, tr(Si2, p))""",
-        'B,q,w': """dw_surface_dot.i.Si1(q, w)
-                  - dw_surface_dot.i.Si2(q, tr(Si1, w))""",
+        'BT,v,p': """dw_dot.i.Si1(v, p) 
+                   - dw_dot.i.Si1(v, tr(Si2, p))""",
+        'B,q,w': """dw_dot.i.Si1(q, w)
+                  - dw_dot.i.Si2(q, tr(Si1, w))""",
     }
 
     requirements = {
@@ -819,9 +827,9 @@ def define(filename_mesh=None, coefs_filename=None, mat_prop=None,
             'epbcs': all_periodic_p,
             'gamma': gamma,
             'equations': {
-                'vec_r,z,': 'dw_surface_integrate.i.Si1(reg.rho, z)',
-                'vec_b,q,': """dw_surface_integrate.i.Ss1(q)
-                             - dw_surface_integrate.i.Ss2(q)"""
+                'vec_r,z,': 'dw_integrate.i.Si1(reg.rho, z)',
+                'vec_b,q,': """dw_integrate.i.Ss1(q)
+                             - dw_integrate.i.Ss2(q)"""
             },
             'class': MySimpleEVP_II_rhs_3,
             'dump_variables': ['w', 'p'],
@@ -845,8 +853,8 @@ def define(filename_mesh=None, coefs_filename=None, mat_prop=None,
             'epbcs': all_periodic_p,
             'gamma': gamma,
             'equations': {
-                'vec_b,q,': """dw_surface_integrate.i.Ip(q)
-                             - dw_surface_integrate.i.Im(q)"""
+                'vec_b,q,': """dw_integrate.i.Ip(q)
+                             - dw_integrate.i.Im(q)"""
             },
             'class': MySimpleEVP_II_rhs_xi,
             'dump_variables': ['w', 'p'],
@@ -872,7 +880,7 @@ def define(filename_mesh=None, coefs_filename=None, mat_prop=None,
     options = {
         'coefs': 'coefs',
         'requirements': 'requirements',
-        'volume': {'expression': 'd_surface.i.Ip(p)'},
+        'volume': {'expression': 'ev_volume.i.Ip(p)'},
         # 'multiprocessing': True,
         'multiprocessing': False,
         'coefs_filename': coefs_filename,
@@ -888,10 +896,10 @@ def define(filename_mesh=None, coefs_filename=None, mat_prop=None,
     solvers = {
         'ls': ('ls.mumps', {}),
         'newton': ('nls.newton', {
-            'i_max'    : 1,
-            'eps_a'   : 1e-4,
-            'eps_r'   : 1e-4,
-            'problem' : 'nonlinear',
+            'i_max': 1,
+            'eps_a': 1e-4,
+            'eps_r': 1e-4,
+            'problem': 'nonlinear',
         })
     }
 

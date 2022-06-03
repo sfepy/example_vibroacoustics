@@ -4,12 +4,14 @@
 # Homogenization of the vibro–acoustic transmission on periodically
 # perforated elastic plates with arrays of resonators.
 # https://arxiv.org/abs/2104.01367 (arXiv:2104.01367v1)
+# https://doi.org/10.1016/j.apm.2022.05.040 (Applied Mathematical Modelling, 2022)
 
 import os
 import numpy as nm
 from sfepy.base.base import Struct
 from sfepy.homogenization.coefficients import Coefficients
 from sfepy.discrete.fem import Mesh, FEDomain
+import meshio
 
 
 def coefs2qp(out, coefs, nqp):
@@ -51,7 +53,7 @@ def get_homogmat(coors, mode, pb, coefs_filename, omega=None):
             rerr = nm.abs(coefs_['omega'][idx] - omega) / omega
             if rerr > 1e-3:
                 raise ValueError('omega: given=%e, found=%e'
-                    % (omega, coefs_['omega'][idx]))
+                                 % (omega, coefs_['omega'][idx]))
 
             print('found coeficcients for w=%e' % coefs_['omega'][idx])
             del(coefs_['omega'])
@@ -102,11 +104,9 @@ def eval_phi(pb, state_p1, state_p2, p_inc):
 
     # transmission loss function: log10(|p_in|^2/|p_out|^2)
     pvars['P2'].set_data(nm.ones_like(state_p2) * p_inc**2)
-    phi_In = pb.evaluate('ev_surface_integrate.5.GammaIn(P2)',
-                        P2=pvars['P2'])
+    phi_In = pb.evaluate('ev_integrate.5.GammaIn(P2)', P2=pvars['P2'])
     pvars['P1'].set_data(state_p1**2)
-    phi_Out = pb.evaluate('ev_surface_integrate.5.GammaOut(P1)',
-                        P1=pvars['P1'])
+    phi_Out = pb.evaluate('ev_integrate.5.GammaOut(P1)', P1=pvars['P1'])
 
     return 10.0 * nm.log10(nm.absolute(phi_In) / nm.absolute(phi_Out))
 
@@ -115,65 +115,29 @@ def post_process(out, pb, state, save_var0='p0'):
     rmap = {'g01': 0, 'g02': 0, 'g0': 0, 'dp0': 0, 'sp0': 0, 'p0': 0,
             'px': 1, 'p1': 1, 'p2': 2}
 
-    for k in out.keys():
-        if 'real_' in k or 'imag_' in k:
-            newk = k[:4] + '.' + k[5:]
-            out[newk] = out[k]
-            del(out[k])
-
-    midfn = pb.conf.filename_mesh_plate
+    midfn = pb.conf.ofn_trunk + '_plate'
     fname, _ = os.path.splitext(os.path.basename(midfn))
-    fname = os.path.join(pb.output_dir, fname + '.h5')
+    fname = os.path.join(pb.output_dir, fname + '.vtk')
 
-    aux = []
-    for k, v in read_dict_hdf5(fname)['step0'].items():
-        if ('real' in k) or ('imag' in k):
-            aux.append(k)
-            vn = k.strip('_').split('_')
-            key = '%s.%s' % tuple(vn)
-            if key not in out:
-                out[key] = Struct(name=v['name'].decode('ascii'),
-                                    mode=v['mode'].decode('ascii'),
-                                    dofs=[j.decode('ascii') for j in v['dofs']],
-                                    var_name=v['varname'].decode('ascii'),
-                                    shape=v['shape'],
-                                    data=v['data'],
-                                    dname=v['dname'])
-                if 'imag' in k:
-                    rmap[vn[1]] = 0
+    vtkdata = meshio.read(fname)
+    for k, v in vtkdata.point_data.items():
+        if ('real.' in k) or ('imag.' in k):
+            if k not in out:
+                _, var_name = k.split('.')
+                if var_name in rmap and rmap[var_name] == 0:
+                    var_name = save_var0
+                if len(v.shape) < 2:
+                    v = v[:, None]
+
+                out[k] = Struct(mode='vertex', name=k, data=v,
+                                var_name=var_name)
 
     absvars = [ii[4:] for ii in out.keys() if ii[0:4] == 'imag']
     for ii in absvars:
-        if type(out['real' + ii]) is dict:
-            rpart = out.pop('real' + ii)
-            rdata = rpart['data']
-            ipart = out.pop('imag' + ii)
-            idata = ipart['data']
-            dim = rdata.shape[1]
-
-            varname = save_var0
-            if dim > 1:
-                aux = nm.zeros((rdata.shape[0], 1), dtype=nm.float64)
-
-            data = rdata if dim < 2 else nm.hstack((rdata, aux))
-            out['real' + ii] = Struct(name=rpart['name'],
-                                      mode=rpart['mode'],
-                                      dofs=rpart['dofs'],
-                                      var_name=varname,
-                                      data=data.copy())
-            data = idata if dim < 2 else nm.hstack((idata, aux))
-            out['imag' + ii] = Struct(name=ipart['name'],
-                                      mode=ipart['mode'],
-                                      dofs=ipart['dofs'],
-                                      var_name=varname,
-                                      data=data.copy())
-
-        else:
-            rpart = out['real' + ii].__dict__
-            rdata = rpart['data']
-            ipart = out['imag' + ii].__dict__
-            idata = ipart['data']
-            varname = rpart['var_name']
+        rpart = out['real' + ii].__dict__
+        rdata = rpart['data']
+        ipart = out['imag' + ii].__dict__
+        idata = ipart['data']
 
         absval = nm.absolute(rdata + 1j*idata)
         if rdata.shape[1] > 1:
@@ -182,15 +146,8 @@ def post_process(out, pb, state, save_var0='p0'):
 
         out[ii[1:]] = Struct(name=rpart['name'],
                              mode=rpart['mode'],
-                             dofs=rpart['dofs'],
-                             var_name=varname,
+                             var_name=rpart['var_name'],
                              data=absval.copy())
-
-    # all plate variables as save_var0
-    for k in out.keys():
-        k0 = k.replace('imag.', '').replace('real.', '')
-        if rmap[k0] == 0:
-            out[k].var_name = save_var0
 
     return out
 
