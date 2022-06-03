@@ -90,12 +90,12 @@ Running simulation
 ------------------
 
 To run the numerical simulation, download the
-`archive <https://github.com/sfepy/example_vibroacoustics/archive/v1.zip>`_,
+`archive <https://github.com/sfepy/example_vibroacoustics/archive/v2.zip>`_,
 unpack it in the main SfePy directory and type:
 
 .. code::
 
-   python example_vibroacoustics-1/acoustics.py
+   python example_vibroacoustics-2/acoustics.py
 
    
 By running the :code:`resview.py` script, you can visualize the distribution of
@@ -103,7 +103,7 @@ the global pressure field calculated for frequency :math:`\omega = 33000` Hz:
 
 .. code::
    
-   ./resview.py example_vibroacoustics-1/results/waveguide_mesh_w33000_p.vtk -v "270,90"
+   ./resview.py example_vibroacoustics-2/results/waveguide_mesh_w33000_p.vtk -v "270,90"
 
 .. figure:: _static/results1.png
    :width: 700px
@@ -117,7 +117,7 @@ and e.g. the deflection field calculated at the interface :math:`\Gamma_0`:
 
 .. code::
    
-   ./resview.py example_vibroacoustics-1/results/waveguide_mesh_w33000_dp0.vtk -v "0,0" --position-vector "0,2,0" -f real.w:p0 imag.w:p1
+   ./resview.py example_vibroacoustics-2/results/waveguide_mesh_w33000_dp0.vtk -v "0,0" --position-vector "0,2,0" -f real.w:p0 imag.w:p1
    
 .. figure:: _static/results2.png
    :width: 700px
