@@ -106,7 +106,7 @@ html_context = {
     'menu_links_name': 'Connections',
     'menu_links': [
         ('<i class="fa fa-github fa-fw"></i> Source Code', 'https://github.com/sfepy/example_vibroacoustics'),
-        ('<i class="fa fa-file-text fa-fw"></i> The Paper', 'https://arxiv.org/abs/2104.01367'),
+        ('<i class="fa fa-file-text fa-fw"></i> The Paper', 'https://doi.org/10.1016/j.apm.2022.05.040'),
         ('<i class="fa fa-external-link fa-fw"></i> SfePy', 'https://sfepy.org'),
     ],
 }
